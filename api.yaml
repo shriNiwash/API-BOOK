@@ -1,0 +1,139 @@
+swagger: "2.0"
+info:
+  title: Book Inventory documentation By sherpa-tech
+  description: sherpa-tech
+  version: 1.0
+  contact:
+    email: shriniwash@sherpa-tech.com
+  licence: 
+    name: "http://apache.org/"
+  servers : 
+    -url: "http://localhost:3000"
+    description: This is my Local server
+    -url: "sherpa-tech.com"
+    description: This is my company server
+
+schemes : [http,https]
+
+paths: 
+  /books/list:
+    get: 
+      summary: Return an Array
+      description: Returning an Array
+      responses: 
+        200:
+          description: success
+          schema: 
+            type: array
+            items: 
+              type: object
+              properties: 
+                id: 
+                  type: integer
+                name: 
+                  type: string
+                sold: 
+                  type: integer
+        400:
+          description: user-error
+        500:
+          description: internal server error
+#sending and receiving data throght id
+  /books/list/{id}:
+    get:
+      summary: Raturn Array of Particular user
+      description: Array Return
+      parameters: 
+        - name: id
+          in: path
+          required: true
+          schema: 
+           type: integer
+      responses: 
+        200:
+          description: success
+
+#sending and receiving data throght id
+  /books/list/{ids}:
+    delete:
+      summary: Raturn Array of Particular user
+      description: Array Return
+      parameters: 
+        - name: ids
+          in: path
+          required: true
+          schema: 
+            type: integer
+      responses: 
+        200:
+          description: success
+
+#posting data on mongodb
+  /books:
+    post:
+      summary: Posting Data
+      produces: 
+        - application/json
+      consumes: 
+        - application/json
+      parameters:
+        - in: body
+          name: userData
+          schema: 
+            type: object
+            properties: 
+              name:
+                type: string
+              sold:
+                type: integer
+      responses:
+        200:
+          description: Success
+
+#patch operation
+  /books/list/{updateid}:
+    patch: 
+      summary: Update Operation
+      decscription: Update the data by id
+      parameters: 
+        - name: updateid
+          in: path
+          description: Update by Id
+          required: true
+          explode: false
+          schema:   
+            type: integer
+            format: int64
+      requestBody: 
+        description: Update the book inventory 
+        content:  
+          application/json:
+            schema: 
+              name:
+                type: string
+              sold: 
+              type: integer
+      responses:
+        200:
+          description: Update data
+          content: 
+            application/json:
+              schema:
+                name:
+                  type: string
+                sold: 
+                  type: integer
+        400:
+          description: Invalid id
+        4001:
+          description: un authorized
+
+
+
+
+
+
+    
+          
+  
+   
