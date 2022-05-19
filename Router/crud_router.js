@@ -8,9 +8,16 @@ const swaggerUI  = require('swagger-ui-express');
 const YAML = require('yamljs');
 const swaggerjsDocs = YAML.load('./api.yaml');
 const router = express.Router();
+const cors = require('cors');
 
 router.use(bodyparser.json());
 router.use(express.urlencoded({extended:false}));
+
+router.use(cors({
+    origin:"http://127.0.0.1:5500",
+    methods:['POST','GET','DELETE','PUT','PATCH'],
+
+}))
 
 //swagger docs url
 router.use("/api-docs",swaggerUI.serve,swaggerUI.setup(swaggerjsDocs));
