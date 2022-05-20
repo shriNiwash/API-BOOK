@@ -9,6 +9,18 @@ const YAML = require('yamljs');
 const swaggerjsDocs = YAML.load('./api.yaml');
 const router = express.Router();
 const cors = require('cors');
+const redis = require('redis');
+// const REDIS_PORT = process.env.PORT || 6379;
+
+//implementing redis
+const client = redis.createClient({
+    url: 'redis://default:Mrshri1212@redis-13009.c10.us-east-1-4.ec2.cloud.redislabs.com:13009',
+});
+
+
+(async ()=> {
+    await client.connect();
+})();
 
 router.use(bodyparser.json());
 router.use(express.urlencoded({extended:false}));
@@ -18,6 +30,44 @@ router.use(cors({
     methods:['POST','GET','DELETE','PUT','PATCH'],
 
 }))
+
+//redis middleware
+const redis_form = async(req,res,next)=>{
+    const username = req.params.id;
+    const value = await client.get(username);
+    if(value){
+        console.log('fetching data from redis...');
+        res.send(value);
+    }
+    else{
+        next();
+    }
+
+}
+
+//redis middleware for total-sales
+const redis_tatal = async(req,res,next)=>{
+    const value = await client.get('total-sales');
+    if(value){
+        console.log('Total-sales is fetching from redis');
+        res.send(value);
+    }
+    else{
+        next();
+    }
+}
+
+//redis middleware for books list
+
+const redis_books = async(req,res,next)=>{
+    const value = await client.get('books');
+    if(value){
+        console.log('data coming from redis..');
+        res.send(value);
+    }else{
+        next();
+    }
+}
 
 //swagger docs url
 router.use("/api-docs",swaggerUI.serve,swaggerUI.setup(swaggerjsDocs));
@@ -70,10 +120,11 @@ router.post("/books",(req,res)=>{
 
 })
 //Creating GET request API(READ OPERATION)
-router.get('/books/list',async(req,res)=>{
+router.get('/books/list',redis_books,async(req,res)=>{
     try{
         const ListData = await BookModel.find();
         res.json(ListData);
+        client.setEx('books',3600,JSON.stringify(ListData));
     }
     catch(err){
         res.send('error', +err);
@@ -82,18 +133,20 @@ router.get('/books/list',async(req,res)=>{
 });
 
 //API Fetching By ID (READ OPERATION)
-router.get('/books/list/:id',(req,res)=>{
-    BookModel.findById(req.params.id).then((data)=>{
-        console.log(data);
+router.get('/books/list/:id',redis_form,async(req,res)=>{
+    try{
+        const data = await BookModel.findById(req.params.id);
         res.json(data);
-    }).catch((err)=>{
-        console.log(err);
-        res.send('error occured');
-    })
+        const username = req.params.id;
+        client.setEx(username,3600,JSON.stringify(data));
+    }
+    catch(err){
+        throw err;
+    }
 })
 
 //total books sold
-router.get('/books/total-sales',(req,res)=>{
+router.get('/books/total-sales',redis_tatal,(req,res)=>{
     BookModel.aggregate([
         {$group:{_id:"",Total:{$sum:'$sold'}}},
         {$project:{_id:"",Total:1,_id:0}}
@@ -103,6 +156,7 @@ router.get('/books/total-sales',(req,res)=>{
         }
         else{
             res.json(result);
+            client.setEx('total-sales',3600,JSON.stringify(result));
         }
     })
     
